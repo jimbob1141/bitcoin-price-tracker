@@ -4,9 +4,12 @@ from matplotlib import pyplot
 import time
 btc_time = []
 btc_price = []
-old_data = ''
+
 
 def get_data():
+    new_data = ''
+    old_data = ''
+    while True
     btc = requests.get("https://api.coinmarketcap.com/v1/ticker/bitcoin/")
     new_data = json.loads(btc.text)
     if new_data != old_data:
@@ -24,4 +27,4 @@ def graph_make(btc_time, btc_price):
 
 while True:
     get_data()
-    time.sleep(5)
+    time.sleep(1)
