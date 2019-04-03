@@ -1,41 +1,58 @@
 import requests
 import json
-import time
-from matplotlib import pyplot
+from sql_alchemy import create_engine
 
-#declaring lists that will be appended too.
-#will later be swapped out with a sql db, this is only temporary
-btc_time = []
-btc_price = []
-
-
-def get_data():
-    #used for comparison as the data refreshes irregularly
-    new_data = ''
-    old_data = ''
-    #Loops continuously
-    while True:
-        #gets current btc information
-        btc = requests.get("https://api.coinmarketcap.com/v1/ticker/bitcoin/")
-        #converts the string response to json
-        new_data = json.loads(btc.text)
-        #compares new data to the previous data returned, if the data has changed it appends
-        #the new data to the lists
-        if new_data != old_data:
-            btc_time.append(new_data[0]['last_updated'])
-            btc_price.append(new_data[0]['price_usd'])
-            #sets old data to the now added data so if it is received again it won't append it
-            old_data = new_data
-        #calls the graph_make function to display a table every 10 info points, this is only for testing
-        if len(btc_time) % 10 == 0:
-            graph_make(btc_time, btc_price)
-        #waits 5 seconds before trying again so I don't send too many http requests
-        time.sleep(5)
-
-
-def graph_make(btc_time, btc_price):
-    pyplot.scatter(btc_time, btc_price)
-    pyplot.show()
-
-
-get_data()
+engine = create_engine('postgresql://scott:tiger@localhost:5432/mydatabase')
+def process_request():
+    btc_data = requests.get("https://api.coinmarketcap.com/v1/ticker/")
+    json_data = json.loads(btc_data.text)
+    old_data = {}
+    for coin_dict in json_data:
+        if coin_dict['id'] not in old_data.keys:
+            old_data[coin_dict['id']] == coin_dict['last_updated']
+        if coin_dict['last_updated'] != old_data['id']:
+            coin_id = coin_dict['id']
+            symbol = coin_dict['symbol']
+            rank = coin_dict['rank']
+            price_usd = coin_dict['price_usd']
+            price_btc = coin_dict['price_btc']
+            volume_usd_24h = coin_dict['24h_volume_usd']
+            market_cap_usd = coin_dict['market_cap_usd']
+            available_supply = coin_dict['available_supply']
+            total_supply = coin_dict['total_supply']
+            max_supply = coin_dict['max_supply']
+            percent_change_1h = coin_dict['percent_change_1h']
+            percent_change_24h = coin_dict['percent_change_24h']
+            percent_change_7d = coin_dict['percent_change_7d']
+            last_updated = coin_dict['last_updated']
+            statement = ('INSERT INTO crypto_currency (coin_id,' +
+                                                        'symbol,' +
+                                                        'rank,' +
+                                                        'price_usd,' +
+                                                        'price_btc,' +
+                                                        'volume_usd_24h,' +
+                                                        'market_cap_usd,' +
+                                                        'available_supply,' +
+                                                        'total_supply,' +
+                                                        'max_supply,' +
+                                                        'percent_change_1h,' +
+                                                        'percent_change_24h,' +
+                                                        'percent_change_7d,' +
+                                                        'last_updated)' +
+                                                        'VALUES (' +
+                                                        coin_id + ',' +
+                                                        symbol + ',' +
+                                                        str(rank) + ',' +
+                                                        str(price_usd) + ',' + +
+                                                        str(price_btc) + ',' +
+                                                        str(volume_usd_24h) + ',' +
+                                                        str(market_cap_usd) + ',' +
+                                                        str(available_supply) + ',' +
+                                                        str(total_supply) + ',' +
+                                                        str(max_supply) + ',' +
+                                                        str(percent_change_1h) + ',' +
+                                                        str(percent_change_24h) + ',' +
+                                                        str(percent_change_7d) + ',' +
+                                                        str(last_updated) + ')')
+            engine.execute(statement)
+                                        
