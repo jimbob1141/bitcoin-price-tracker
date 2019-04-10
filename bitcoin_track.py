@@ -3,13 +3,17 @@ import json
 import time
 from sqlalchemy import create_engine
 
-engine = create_engine('postgresql://james:abz7d@localhost:5432/postgres')
+engine = create_engine('postgresql://james:iz5npo@localhost:5432/postgres')
 engine.connect()
 def process_request():
     old_data = {}
     while True:
-        btc_data = requests.get("https://api.coinmarketcap.com/v1/ticker/")
-        json_data = json.loads(btc_data.text)
+        try:
+            btc_data = requests.get("https://api.coinmarketcap.com/v1/ticker/")
+            json_data = json.loads(btc_data.text)
+        except requests.exceptions.ConnectionError:
+            print('Connection refused, retying...')
+            continue
         for coin_dict in json_data:
             if coin_dict['id'] not in old_data.keys():
                 old_data[coin_dict['id']] = coin_dict['last_updated']
@@ -62,6 +66,6 @@ def process_request():
                                                             str(last_updated) + ');')
                 engine.execute(statement)
                 old_data[coin_dict['id']] = coin_dict['last_updated']
-        
+        time.sleep(30)     
 
 process_request()                                        
